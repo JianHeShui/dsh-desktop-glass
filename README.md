@@ -19,6 +19,8 @@ DSH 桌面版的毛玻璃主题。窗口透出桌面壁纸，页面半透明，�
 
 只装插件，页面半透明但窗口不透明，无法看到壁纸；仅打补丁，窗口透明但页面任有纯色覆盖。二者需一同下载安装
 
+## 安装
+
 刚需 Node.js 18+。打补丁时用 `node --check` 校验语法，PATH 里找不到 node 的话脚本会去翻 DSH 自带的运行时。
 
 先装插件：
@@ -73,7 +75,7 @@ powershell -ExecutionPolicy Bypass -File .\windows-acrylic\restore-asar.ps1
 
 **Acrylic 失焦会变实。** 这是 Windows 降级材质的行为，无法绕过。介意的话可尝试使用 `-Material mica`,但作者未能以其达成理想透明效果。
 
-**DSH 更新会覆盖 `app.asar`**，，重跑一次补丁脚本即可。
+**DSH 更新会覆盖 `app.asar`**，以致插件失效，重跑一次补丁脚本即可。
 
 **若 DSH 后续更新更改了主窗口结构**，补丁脚本会直接报错退出，不会动已安装的文件。
 
