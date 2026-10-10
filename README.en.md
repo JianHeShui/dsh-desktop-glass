@@ -1,88 +1,65 @@
 # dsh-desktop-glass
 
-A **frosted-glass look for the DeepSeek Harness desktop app**: the window shows the desktop wallpaper through a translucent sky-blue page, with no divider lines.
+Frosted glass for the DSH desktop app. The window shows the desktop wallpaper through a translucent blue page, no divider lines.
 
-> Full frosted glass requires **Windows** (it uses the native Mica / Acrylic window materials). On other platforms only the translucent page half applies.
+<!-- drop a screenshot in and uncomment
+![screenshot](docs/screenshot.png)
+-->
+
+Full effect is Windows-only, since it uses the system Mica / Acrylic materials. Elsewhere the plugin still installs, but you only get the translucent page. Verified on DSH 0.2.0-rc.2.
 
 [中文说明](README.md)
 
----
+## Why there are two parts
 
-## What you get
+The window material is a `BrowserWindow` option in the Electron main process — it lives in `main.js` inside `app.asar`. A plugin can't reach it; a plugin can only inject CSS. So the full effect needs both:
 
-- **Desktop shows through** — the main window uses a Windows Acrylic / Mica material
-- **Translucent sky-blue page** — page background and sidebar become semi-transparent
-- **Three-column gradients** — sidebar / center / right column each get their own linear gradient
-- **Panel transition** — center and right panels fade + slide in on switch
-- **No divider lines** — column radius, header underline, dock separator, sidebar border all removed
+- **The plugin** (repo root) — the page half: translucent background, per-column gradients, panel transitions, no dividers
+- **The patcher** (`windows-acrylic/`) — the window half: puts `backgroundMaterial` and a transparent `backgroundColor` back on the main window
 
----
-
-## ⚠️ It takes two halves
-
-This is the part people get wrong: **a plugin cannot set the window material.** That is an Electron main-process `BrowserWindow` option baked into `main.js` inside `app.asar`. A DSH client plugin can only inject CSS — it cannot change whether the window itself is see-through.
-
-| Half | What it does | How to install | If missing |
-|---|---|---|---|
-| **Client plugin**<br>`lib/client.js` | Translucent page, gradients, transitions, no dividers | Into the DSH profile (the repo root *is* the plugin package) | Window is see-through, but a solid page colour hides it |
-| **Window-material patcher**<br>`windows-acrylic/` | Restores `backgroundMaterial` / `backgroundColor` on the main window (Windows) | Run `apply-acrylic.ps1` | Page is translucent, but the window is opaque |
-
----
+Plugin only: translucent page, opaque window, no wallpaper. Patcher only: see-through window, solid page. You need both.
 
 ## Install
 
-### Requirements
+Needs Node.js 18+. The patcher runs `node --check` for syntax validation and falls back to the Node runtime bundled with DSH if `node` isn't on PATH.
 
-- DSH desktop app on Windows
-- **Node.js 18+** for the patcher (it uses `node --check` for syntax validation; it falls back to the Node runtime bundled with DSH)
-
-### 1. Install the client plugin
+Install the plugin:
 
 ```powershell
-# from the repository root
 node scripts/install-plugin.mjs
 ```
 
-Then **restart DSH**.
+It copies the repo into `<DSH_HOME>\profiles\desktop\node_modules\dsh-desktop-glass` and adds the bundle entry and dependency to the profile's `package.json`. Restart DSH afterwards.
 
-Options: `--dry-run`, `--link` (symlink instead of copy, handy while tweaking), `--profile <dir>`.
-
-### 2. Apply the window-material patch (Windows only)
+Apply the window-material patch (Windows):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\windows-acrylic\apply-acrylic.ps1
 ```
 
-The script **waits for DSH to exit**: run it, then right-click the tray icon → Quit. It then patches, verifies and restarts the app.
+It waits for DSH to exit. Run it, then quit DSH from the tray — it patches and restarts the app itself.
 
-Options: `-Material mica`, `-AppRoot <dir>`, `-NodePath <path>`.
+Options: `-Material mica`, `-AppRoot <dir>` if auto-detection misses, `-DryRun` to detect and generate without touching installed files.
 
-The install directory is auto-detected from: the running process → the uninstall registry entry → common install paths.
-
-### 3. Verify
-
-The window should show the desktop wallpaper. If it stays opaque, enable **Settings → Personalization → Colors → Transparency effects**.
-
----
+If the window stays opaque, check `Settings → Personalization → Colors → Transparency effects`.
 
 ## Tuning
 
-Edit the `rgba(...)` alpha (the **last** number) in [`lib/client.js`](lib/client.js):
+Change the last number in the `rgba(...)` values in `lib/client.js`. Higher is more opaque.
 
-| Target | Line | Default | Notes |
-|---|---|---|---|
-| Page base `--dsw-alias-bg-base` | 33 | `rgba(224, 242, 254, 0.24)` | Whole-page background |
-| Sidebar `--dsw-specific-sidebar-fill` | 34 | `rgba(186, 230, 253, 0.28)` | Left sidebar fill |
-| Gradient start (all three columns) | 63 / 66 / 69 | `rgba(186, 230, 253, 0.42)` | Change the RGB values to recolour |
-| Sidebar gradient end | 63 | `rgba(224, 242, 254, 0.14)` | |
-| Center / right gradient end | 66 / 69 | `rgba(240, 249, 255, 0.10)` | |
-| `--dsw-alias-bg-layer-1/2/3` | 35–37 | `0.94` | **Leave alone** — these are card/panel surfaces floating above content; making them translucent smears the settings UI |
+| What | Line | Default |
+|---|---|---|
+| Page background | 33 | `rgba(224, 242, 254, 0.24)` |
+| Sidebar | 34 | `rgba(186, 230, 253, 0.28)` |
+| Column gradient start | 63 / 66 / 69 | `rgba(186, 230, 253, 0.42)` |
+| Sidebar gradient end | 63 | `rgba(224, 242, 254, 0.14)` |
+| Center / right gradient end | 66 / 69 | `rgba(240, 249, 255, 0.10)` |
 
-Re-run `node scripts/install-plugin.mjs` and restart DSH. (With `--link`, just restart.)
+Leave `bg-layer-1/2/3` (lines 35–37) alone. Those are cards and panel surfaces floating above the content, and making them translucent smears the settings UI.
 
-Sky-blue ramp, light to dark: `#F0F9FF` → `#E0F2FE` → `#BAE6FD` → `#7DD3FC` → `#38BDF8`
+For a different shade of blue, change the RGB of the three gradient starts. Light to dark: `#F0F9FF` `#E0F2FE` `#BAE6FD` `#7DD3FC` `#38BDF8`.
 
----
+Re-run the installer and restart. If you installed with `--link`, just restart.
 
 ## Uninstall
 
@@ -91,60 +68,41 @@ node scripts/uninstall-plugin.mjs
 powershell -ExecutionPolicy Bypass -File .\windows-acrylic\restore-asar.ps1
 ```
 
-The plugin is non-invasive: it injects a single `<style>` and removes it cleanly on uninstall.
+The plugin injects one `<style>` tag, so uninstalling leaves nothing behind.
 
----
+## Known issues
 
-## Compatibility
+**Acrylic goes opaque when the window loses focus.** That's Windows downgrading the material; nothing to do about it. Use `-Material mica` if it bothers you — it degrades less.
 
-- Windows 10 / 11, with system transparency effects enabled
-- Verified on DSH **0.2.0-rc.2**
-- The patcher matches the main window's `win32 && primary` branch by **anchor**, not by version. After a DSH update, re-run the same script. If a future build restructures that branch, the script **fails loudly without touching any installed file**
-- Non-Windows: the plugin still installs (translucent page), but the window-material patch does not apply
+**DSH updates overwrite `app.asar`**, so the glass disappears. Re-run the patcher.
 
----
+**The patch trims a doc comment.** To keep `main.js` the same length it has to remove an equal number of bytes, and it takes them from a JSDoc comment. No effect on behaviour.
 
-## Known limitations
+**If DSH ever restructures the main window block**, the patcher fails loudly and leaves installed files untouched. It matches on an anchor, not a version.
 
-- **Acrylic degrades when the window loses focus** — that is DWM behaviour, not something this project controls. Use `-Material mica` if it bothers you
-- **DSH auto-updates overwrite `app.asar`**, so the glass disappears; re-run `apply-acrylic.ps1`
-- The patch is **byte-neutral**: it trims a short, irrelevant JSDoc comment to keep `main.js` the same length
-- A build with Electron's **embedded asar integrity validation** enabled would refuse to start after patching; restore with `restore-asar.ps1`. Current DSH desktop builds do not enable it
-- Patching `app.asar` modifies the host application — evaluate the risk yourself and mind DSH's licence terms
+**If a build enables Electron's embedded asar integrity validation**, patching will stop it from starting. Restore with `restore-asar.ps1`. Current DSH builds don't enable it.
 
----
+Patching `app.asar` modifies the host application. Your call on the risk; also mind DSH's licence terms.
 
 ## How it works
 
-**Why the plugin cannot just retune tokens.** In the Windows layout the background is a stack of opaque layers (`.frame` → `.centerCol` → `ConversationRoot.root`); even at alpha 0.7 the composite is ~99% opaque. macOS differs — its `.frame` is already `transparent`, which is why vibrancy shows through there. So the plugin makes `.frame` fully transparent, makes the page base and sidebar translucent, and adds a gradient per column for depth. Class names are matched by suffix (`[class*="_centerCol"]`) so hashed build names do not matter.
+**Plugin.** In the Windows layout the background is a stack of opaque layers (`.frame` → `.centerCol` → `ConversationRoot.root`); even at alpha 0.7 the composite is nearly solid. macOS doesn't have this problem — its `.frame` is already transparent, which is why vibrancy shows through there. So the plugin makes `.frame` fully transparent, makes the page base and sidebar translucent, and puts a gradient on each column for depth. Class names are matched by suffix (`[class*="_centerCol"]`) so hashed build names don't matter.
 
-**Why the patcher is byte-neutral.** An asar is a header JSON plus raw entry bytes; the header stores each entry's `offset`, `size` and integrity hash. Growing `main.js` would shift every later entry. So the patcher inserts the two properties, trims an equal number of bytes from a real doc comment, keeps the entry size identical (all offsets unchanged), and only updates that entry's integrity hash (`hash` and `blocks[0]`, which coincide for a single block).
-
----
+**Patcher.** An asar is a header JSON plus raw entry bytes, and the header records each entry's offset, size and integrity hash. Growing `main.js` would shift every later entry. So the patch inserts the two properties and removes an equal number of bytes from a comment, keeping `main.js` the same length and only updating its own hash.
 
 ## Layout
 
 ```
-.
-├─ package.json            # plugin manifest (repo root = plugin package)
-├─ cordis.patch.yml        # bundle patch that mounts the plugin
-├─ lib/
-│  ├─ index.js             # host half (no-op)
-│  └─ client.js            # browser half: injects the translucent CSS
-├─ windows-acrylic/        # window-material patcher (Windows)
-│  ├─ apply-acrylic.ps1
-│  ├─ restore-asar.ps1
-│  ├─ make-acrylic.mjs
-│  └─ asar-state.mjs
-└─ scripts/
-   ├─ install-plugin.mjs
-   └─ uninstall-plugin.mjs
+package.json            plugin manifest (repo root is the package)
+cordis.patch.yml        bundle patch that mounts the plugin
+lib/client.js           browser half, injects the CSS
+lib/index.js            host half, empty
+windows-acrylic/        window-material patcher
+scripts/                install / uninstall
 ```
 
-`backups/` and `build/` are runtime output and are git-ignored.
-
----
+`backups/` and `build/` are generated at runtime and git-ignored.
 
 ## License
 
-[MIT](LICENSE) © JianHeShui
+[MIT](LICENSE)
