@@ -1,0 +1,7 @@
+node_modules/
+build/
+backups/
+*.asar
+*.asar.original*
+_patch-check.mjs
+_main-check.mjs

@@ -1,0 +1,52 @@
+{
+  "name": "dsh-desktop-glass",
+  "version": "1.0.0",
+  "description": "Frosted-glass look for the DeepSeek Harness desktop app: translucent page chrome plus a Windows acrylic window material.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "windows-acrylic",
+    "scripts"
+  ],
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "theme",
+    "glass",
+    "frosted-glass",
+    "acrylic",
+    "mica",
+    "windows"
+  ],
+  "author": "JianHeShui",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JianHeShui/dsh-desktop-glass.git"
+  },
+  "homepage": "https://github.com/JianHeShui/dsh-desktop-glass#readme",
+  "bugs": {
+    "url": "https://github.com/JianHeShui/dsh-desktop-glass/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  }
+}

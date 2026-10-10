@@ -1,0 +1,5 @@
+# 默认按文本处理并统一用 LF 存储
+* text=auto eol=lf
+
+# PowerShell 脚本:存储用 LF,检出时用 CRLF(Windows 上更稳)
+*.ps1 text eol=crlf

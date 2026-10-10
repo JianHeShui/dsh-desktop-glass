@@ -1,0 +1,7 @@
+# dsh-desktop-glass bundle patch —— 桌面版毛玻璃(零侵入)。
+# 宿主半部为空操作；浏览器半部 (lib/client.js) 注入覆盖页背景 token 的 <style>，
+# 把页面主背景与左侧栏改成半透明，让 Electron 主窗口的 Windows 亚克力材质透出来。
+# 不改任何内置包、不注册宿主路由，卸载即完全还原。
+- insert:
+    - id: dsh-desktop-glass
+      name: dsh-desktop-glass
